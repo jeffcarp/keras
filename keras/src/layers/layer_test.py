@@ -822,6 +822,37 @@ class LayerTest(testing.TestCase):
         x = [np.zeros(1, dtype="float64"), np.zeros(1, dtype="int32")]
         CustomLayer()(x)
 
+    def test_autocast_complex(self):
+        assertDType = self.assertDType
+
+        class ComplexLayer(layers.Layer):
+            def call(self, x):
+                return x
+
+        # Test complex64 -> complex128
+        layer = ComplexLayer(dtype="complex128")
+        x = ops.zeros([2, 1], dtype="complex64")
+        y = layer(x)
+        assertDType(y, "complex128")
+
+        # Test complex128 -> complex64
+        layer = ComplexLayer(dtype="complex64")
+        x = ops.zeros([2, 1], dtype="complex128")
+        y = layer(x)
+        assertDType(y, "complex64")
+
+        # Test float32 -> complex64 (lossless)
+        layer = ComplexLayer(dtype="complex64")
+        x = ops.zeros([2, 1], dtype="float32")
+        y = layer(x)
+        assertDType(y, "complex64")
+
+        # Test complex64 -> float32 (should not cast to avoid information loss)
+        layer = ComplexLayer(dtype="float32")
+        x = ops.zeros([2, 1], dtype="complex64")
+        y = layer(x)
+        assertDType(y, "complex64")
+
     @pytest.mark.skipif(
         backend.backend() == "numpy", reason="masking not supported with numpy"
     )

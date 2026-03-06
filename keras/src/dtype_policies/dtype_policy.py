@@ -198,10 +198,13 @@ class DTypePolicy:
 
     def _should_cast(self, x, autocast, dtype):
         x_dtype = backend.standardize_dtype(x.dtype)
-        if autocast and backend.is_float_dtype(x_dtype) and x_dtype != dtype:
-            return True
-        else:
+        if not autocast or x_dtype == dtype:
             return False
+        if backend.is_float_dtype(x_dtype):
+            return True
+        if backend.is_complex_dtype(x_dtype):
+            return backend.is_complex_dtype(dtype)
+        return False
 
 
 @keras_export(
